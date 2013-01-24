@@ -26,7 +26,7 @@ include			../jni.mk
 
 LCMS_SOURCE:=		$(wildcard lcms/*.c) $(wildcard *.c)
 LCMS_INCLUDES:=		$(wildcard lcms/*.h)
-LCMS_LDFLAGS:=		$(filter-out $(PLATFORM_LDFLAGS),$(LDFLAGS))
+LCMS_LDFLAGS?=		$(filter-out $(PLATFORM_LDFLAGS),$(LDFLAGS))
 
 ifeq ($(UNIVERSAL),1)
 $(TARGET_PPC) $(TARGET_X86): $(LCMS_SOURCE) $(LCMS_INCLUDES)
