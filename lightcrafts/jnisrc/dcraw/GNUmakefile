@@ -10,7 +10,7 @@ TARGET_BASE:=		DCRaw
 #DEBUG:=			true
 
 ifneq ($(PLATFORM),Windows)
-  JNI_EXTRA_CFLAGS:=	-Wno-pointer-sign
+  JNI_EXTRA_CFLAGS+=	-Wno-pointer-sign
 endif
 
 ifeq ($(PLATFORM),MacOSX)
