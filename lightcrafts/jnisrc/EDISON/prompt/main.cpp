@@ -31,7 +31,7 @@ void Report(CmCError *error, char *srcFilename, CmCParser *srcParser);
 
 //*******************************************************
 
-int main(int argc, char **argv)
+extern "C" int main(int argc, char **argv)
 {
   //check usage
   if(argc != 2) {
