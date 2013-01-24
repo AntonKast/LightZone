@@ -53,6 +53,7 @@ DEFINES:=
 INCLUDES:=
 LDFLAGS:=
 LINK:=
+JNI_EXTRA_CFLAGS:= -fPIC
 
 COMMON_DIR:=		$(ROOT)/lightcrafts
 include			$(COMMON_DIR)/mk/platform.mk
