@@ -12,7 +12,7 @@ TARGET_BASE:=		LCMS
 ##
 JNI_MANUAL_TARGET:=	1
 
-JNI_EXTRA_INCLUDES:=	-Ilcms
+JNI_EXTRA_INCLUDES:=	-Ilcms/include
 ##
 # This is to prevent LCMS from using the MessageBox() function to report errors
 # under Windows and just use stderr instead.
@@ -24,19 +24,25 @@ JAVAH_CLASSES:=		com.lightcrafts.utils.LCMS
 ROOT:=			../../..
 include			../jni.mk
 
-LCMS_SOURCE:=		$(wildcard lcms/*.c) $(wildcard *.c)
-LCMS_INCLUDES:=		$(wildcard lcms/*.h)
+LCMS_SOURCE:=		$(wildcard lcms/src/*.c) $(wildcard *.c)
+LCMS_INCLUDES:=		$(wildcard lcms/src/*.h)
 LCMS_LDFLAGS:=		$(filter-out $(PLATFORM_LDFLAGS),$(LDFLAGS))
 
 ifeq ($(UNIVERSAL),1)
 $(TARGET_PPC) $(TARGET_X86): $(LCMS_SOURCE) $(LCMS_INCLUDES)
 	-$(MKDIR) $(TARGET_DIR)
 	$(CC_LINK) $(CFLAGS) $(INCLUDES) $(LCMS_LDFLAGS) -o $@ $(LCMS_SOURCE)
+ifeq ($(PLATFORM),MacOSX)
+	  cp -p $@ $(TARGET_DIR)
+endif
 	$(RM) $@.dSYM
 else
 $(TARGET): $(LCMS_SOURCE) $(LCMS_INCLUDES)
 	-$(MKDIR) $(TARGET_DIR)
 	$(CC_LINK) $(CFLAGS) $(INCLUDES) $(LCMS_LDFLAGS) -o $@ $(LCMS_SOURCE)
+ifeq ($(PLATFORM),MacOSX)
+	  cp -p $@ $(TARGET_DIR)
+endif
 	$(RM) $@.dSYM
 endif
 

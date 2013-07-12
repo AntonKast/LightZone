@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="4.0.3" transformSequenceNumber="1">
+<install4j version="4.0.0" transformSequenceNumber="1">
   <directoryPresets config="./resources/icons" />
-  <application name="LightZone" distributionSourceDir="" applicationId="3263-1164-2624-0047" mediaDir="" mediaFilePattern="${compiler:sys.shortName}_${compiler:sys.platform}_${compiler:sys.version}" compression="9" lzmaCompression="true" pack200Compression="false" keepModificationTimes="false" shortName="LightZone" publisher="Light Crafts, Inc." publisherWeb="http://www.lightcrafts.com/" version="${compiler:LC_VERSION}" allPathsRelative="true" backupOnSave="false" autoSave="false" convertDotsToUnderscores="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
+  <application name="LightZone" distributionSourceDir="" applicationId="3263-1164-2624-0047" mediaDir="" mediaFilePattern="${compiler:sys.shortName}_${compiler:sys.platform}_${compiler:sys.version}" compression="9" lzmaCompression="true" pack200Compression="false" keepModificationTimes="false" shortName="LightZone" publisher="LightZone Project" publisherWeb="http://lightzoneproject.org/" version="${compiler:LC_VERSION}" allPathsRelative="true" backupOnSave="false" autoSave="false" convertDotsToUnderscores="true" macSignature="????" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="false">
     <languages skipLanguageSelection="false">
       <principalLanguage id="en" customLocalizationFile="" />
       <additionalLanguages />
@@ -23,13 +23,13 @@
     <entries>
       <dirEntry mountPoint="1" file="products" overwrite="1" shared="false" mode="644" uninstallMode="2" excludeSuffixes="" dirMode="755">
         <exclude>
-          <entry location=".svn" launcher="false" />
+          <entry location=".git" launcher="false" />
           <entry location="GNUmakefile" launcher="false" />
         </exclude>
       </dirEntry>
       <dirEntry mountPoint="1" file="../lightcrafts/misc/userdoc" overwrite="1" shared="false" mode="644" uninstallMode="2" excludeSuffixes="" dirMode="755">
         <exclude>
-          <entry location=".svn" launcher="false" />
+          <entry location=".git" launcher="false" />
         </exclude>
       </dirEntry>
     </entries>
@@ -156,23 +156,6 @@
                 <object class="com.install4j.runtime.beans.actions.desktop.RegisterAddRemoveAction">
                   <void property="itemName">
                     <string>${compiler:sys.fullName} ${compiler:sys.version}</string>
-                  </void>
-                </object>
-              </java>
-            </serializedBean>
-            <condition />
-          </action>
-          <action name="" id="237" beanClass="com.install4j.runtime.beans.actions.misc.RunExecutableAction" rollbackBarrier="false" multiExec="false" failureStrategy="2" errorMessage="Could not install eSellerate engine.">
-            <serializedBean>
-              <java class="java.beans.XMLDecoder">
-                <object class="com.install4j.runtime.beans.actions.misc.RunExecutableAction">
-                  <void property="executable">
-                    <object class="java.io.File">
-                      <string>eSellerateInstaller.exe</string>
-                    </object>
-                  </void>
-                  <void property="wait">
-                    <boolean>true</boolean>
                   </void>
                 </object>
               </java>
@@ -548,7 +531,7 @@
     </uninstallerStartup>
   </installerGui>
   <mediaSets>
-    <win32 name="LightZoneWithJava" id="3" mediaFileName="${compiler:sys.shortName}-Installer" installDir="${compiler:sys.shortName} 3" overridePrincipalLanguage="false" requires64bit="false" runPostProcessor="true" postProcessor="cmd /C resources\sign\install4j_shim.cmd $EXECUTABLE" includedJRE="windows-x86-1.6.0_02" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="true">
+    <win32 name="LightZoneWithJava" id="3" mediaFileName="${compiler:sys.shortName}-Installer" installDir="${compiler:sys.shortName}" overridePrincipalLanguage="false" requires64bit="false" runPostProcessor="true" postProcessor="cmd /C resources\sign\install4j_shim.cmd $EXECUTABLE" includedJRE="windows-x86-1.6.0_41" manualJREEntry="false" bundleType="1" jreURL="" jreFtpURL="" jreShared="false" customInstallBaseDir="" createUninstallIcon="true" contentFilesType="1" downloadURL="" runAsAdmin="true">
       <excludedLaunchers />
       <excludedComponents />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />

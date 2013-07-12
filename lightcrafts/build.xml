@@ -10,7 +10,7 @@
 
   <property name="lcjai-jar" value="products/lcjai.jar"/>
 
-	<exec executable="cat" vmlauncher="false" failonerror="true"
+	<exec executable="cat" vmlauncher="true" failonerror="true"
 	      outputproperty="app-version">
 		<arg value="version.txt"/>
 	</exec>
@@ -25,7 +25,7 @@
 	<!--===== Application build ==============================================-->
 
   <condition property="jai-classpath"
-             value="../windows/lib/mlibwrapper_jai.jar">
+             value="../linux/lib/mlibwrapper_jai.jar">
     <not>
       <os family="mac"/>
     </not>
@@ -33,14 +33,16 @@
 
   <target name="javac">
     <exec executable="make" dir="products" failonerror="true"
-          vmlauncher="false"/>
+          vmlauncher="true"/>
 
     <mkdir dir="extbuild"/>
-    <javac srcdir="extsrc" destdir="extbuild" source="1.5" target="1.5"
+    <javac srcdir="extsrc" destdir="extbuild" includeantruntime="false"
+           source="1.6" target="1.6"
            debug="true" classpath="${jai-classpath}"/>
 
     <mkdir dir="build"/>
-    <javac destdir="build" source="1.5" target="1.5" debug="true">
+    <javac destdir="build" includeantruntime="false" debug="true"
+           source="1.6" target="1.6">
       <src path="src"/>
       <classpath>
         <pathelement path="extbuild"/>
@@ -53,7 +55,7 @@
 
   <target name="coprocesses">
     <exec executable="make" dir="coprocesses" failonerror="true"
-          vmlauncher="false">
+          vmlauncher="true">
       <arg value="USE_ICC=${USE_ICC}"/>
       <arg value="UNIVERSAL=${UNIVERSAL}"/>
     </exec>
@@ -61,10 +63,15 @@
 
   <target name="revision">
     <mkdir dir="build/com/lightcrafts/utils/resources"/>
-    <exec executable="svn">
-      <arg value="info"/>
+    <exec executable="git">
+      <arg line="log -1"/>
       <redirector output="build/com/lightcrafts/utils/resources/Revision"
                   logError="true"/>
+    </exec>
+    <exec executable="git">
+      <arg line="config --list"/>
+      <redirector output="build/com/lightcrafts/utils/resources/Revision"
+                  logError="true" append="true"/>
     </exec>
     <copy file="version.txt"
           tofile="build/com/lightcrafts/utils/resources/Version"/>
@@ -72,13 +79,13 @@
 
   <target name="resources" depends="revision">
     <copy todir="build">
-      <fileset dir="resources" excludes=".svn"/>
-      <fileset dir="locale" excludes=".svn"/>
+      <fileset dir="resources" excludes=".git"/>
+      <fileset dir="locale" excludes=".git"/>
     </copy>
   </target>
 
   <target name="jni">
-    <exec executable="make" dir="jnisrc" failonerror="true" vmlauncher="false">
+    <exec executable="make" dir="jnisrc" failonerror="true" vmlauncher="true">
       <arg value="USE_ICC=${USE_ICC}"/>
       <arg value="UNIVERSAL=${UNIVERSAL}"/>
     </exec>

@@ -9,7 +9,7 @@
   <!-- The default maxmemory for the run* targets. -->
   <property name="maxmemory" value="256m"/>
 
-  <exec executable="cat" vmlauncher="false" failonerror="true"
+  <exec executable="cat" vmlauncher="true" failonerror="true"
         outputproperty="app-version">
     <arg value="${common-dir}/version.txt"/>
   </exec>
@@ -19,12 +19,13 @@
   <target name="common">
     <ant dir="${common-dir}" target="jar"/>
     <exec executable="make" dir="products" failonerror="true"
-          vmlauncher="false"/>
+          vmlauncher="true"/>
   </target>
 
   <target name="javac" depends="common">
     <mkdir dir="build"/>
-    <javac destdir="build" source="1.5" debug="true">
+    <javac destdir="build" includeantruntime="false"
+           source="1.6" target="1.6" debug="true">
       <src path="src"/>
       <classpath>
         <fileset dir="${common-dir}/products">
@@ -38,12 +39,12 @@
   </target>
 
   <target name="jni">
-    <exec executable="make" dir="jnisrc" failonerror="true" vmlauncher="false"/>
+    <exec executable="make" dir="jnisrc" failonerror="true" vmlauncher="true"/>
   </target>
 
   <target name="locales">
     <copy todir="build">
-      <fileset dir="locale" excludes=".svn"/>
+      <fileset dir="locale" excludes=".git"/>
     </copy>
   </target>
 
@@ -81,7 +82,6 @@
       </classpath>
       <env key="LD_LIBRARY_PATH" value="."/>
       <sysproperty key="java.library.path" value="."/>
-      <sysproperty key="com.lightcrafts.licensetype" value="ESD"/>
       <sysproperty key="lightcrafts.debug" value="1"/>
     </java>
   </target>
@@ -100,23 +100,27 @@
   </target>
 
   <target name="labelled-archive" depends="archive">
-    <exec executable="${common-dir}/tools/bin/lc-svn-revision"
-          outputproperty="svn-revision" vmlauncher="false" failonerror="true"/>
+    <exec executable="${common-dir}/tools/bin/lc-git-revision"
+          outputproperty="git-revision" vmlauncher="true" failonerror="true"/>
 
     <!-- CruiseControl puts its build label in the "label" property -->
     <mkdir dir="archive"/>
     <move file="LightZone.tar.gz"
-          tofile="archive/LightZone-rev.${svn-revision}.tar.gz"/>
+          tofile="archive/LightZone-rev.${git-revision}.tar.gz"/>
   </target>
-
+  
   <!--===== Sign All Jars ==================================================-->
 
   <target name="sign" depends="jar">
-    <signjar jar="products/lightcrafts.jar" lazy="true" alias="anton" storepass="xxxxxx"/>
-    <signjar jar="products/lightcrafts-linux.jar" lazy="true" alias="anton" storepass="xxxxxx"/>
-    <signjar jar="products/linux-so.jar" lazy="true" alias="anton" storepass="xxxxxx"/>
-    <signjar jar="products/lcjai.jar" lazy="true" alias="anton" storepass="xxxxxx"/>
-    <signjar jar="products/mlibwrapper_jai.jar" lazy="true" alias="anton" storepass="xxxxxx"/>
+    <property name="storetype" value="pkcs12" />
+    <property name="keystore" value="../windows/resources/sign/LightZone.pfx" />
+    <property name="alias" value="pvktmp:2fe2cbb9-7371-497c-8650-f850e878b5ea" />
+    <property name="storepass" value="photoshopsucks" />
+    <signjar jar="products/lightcrafts.jar" storetype="${storetype}" keystore="${keystore}" alias="${alias}" storepass="${storepass}"/>
+    <signjar jar="products/lightcrafts-linux.jar" storetype="${storetype}" keystore="${keystore}" alias="${alias}" storepass="${storepass}"/>
+    <signjar jar="products/linux-so.jar" storetype="${storetype}" keystore="${keystore}" alias="${alias}" storepass="${storepass}"/>
+    <signjar jar="products/lcjai.jar" storetype="${storetype}" keystore="${keystore}" alias="${alias}" storepass="${storepass}"/>
+    <signjar jar="products/mlibwrapper_jai.jar" storetype="${storetype}" keystore="${keystore}" alias="${alias}" storepass="${storepass}"/>
   </target>
 
   <!--===== Assemble the WebStart Site =====================================-->

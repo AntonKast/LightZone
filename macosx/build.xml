@@ -13,9 +13,6 @@
   <!-- The default maxmemory for the run target. -->
   <property name="maxmemory" value="256m"/>
 
-  <!-- The default JVM version for the run target. -->
-  <property name="jvm-version" value="1.5"/>
-
   <exec executable="cat" vmlauncher="false" failonerror="true"
         outputproperty="app-version">
     <arg value="${common-dir}/version.txt"/>
@@ -38,7 +35,7 @@
 
   <target name="javac" depends="common">
     <mkdir dir="build"/>
-    <javac destdir="build" source="1.5" target="1.5" debug="true">
+    <javac destdir="build" source="1.6" target="1.6" debug="true">
       <src path="src"/>
       <classpath>
         <pathelement location="/System/Library/Java/"/>
@@ -54,7 +51,7 @@
 
   <target name="locale">
     <copy todir="build">
-      <fileset dir="locale" excludes=".svn"/>
+      <fileset dir="locale" excludes=".git"/>
     </copy>
   </target>
 
@@ -118,6 +115,7 @@
       <sysproperty key="java.library.path" value="."/>
       <sysproperty key="lightcrafts.debug" value="1"/>
       <sysproperty key="apple.awt.graphics.EnableDeferredUpdates" value="false"/>
+      <sysproperty key="file.encoding" value="utf-8" />
     </java>
   </target>
 
@@ -142,20 +140,20 @@
 
   <target name="resources">
     <copy todir="${bundle-contents}">
-      <fileset dir="resources" excludes=".svn"/>
+      <fileset dir="resources" excludes=".git"/>
     </copy>
   </target>
 
   <target name="build-bundle"
     depends="jar, crash-reporter, delete-bundle, resources">
 
-    <exec executable="${common-dir}/tools/bin/lc-svn-revision"
-          outputproperty="svn-revision" vmlauncher="false" failonerror="true"/>
+    <exec executable="${common-dir}/tools/bin/lc-git-revision"
+          outputproperty="git-revision" vmlauncher="false" failonerror="true"/>
     <copy file="resources/Info.plist" todir="${bundle-contents}"
           overwrite="true">
       <filterset>
         <filter token="APPNAME" value="${app-name}"/>
-        <filter token="BUILD" value="${svn-revision}"/>
+        <filter token="BUILD" value="${git-revision}"/>
         <filter token="BUNDLEID" value="com.lightcrafts.${app-name}"/>
         <filter token="LICENSETYPE" value="${licensetype}"/>
         <filter token="VERSION" value="${app-version}"/>
@@ -166,7 +164,7 @@
       <filterset>
         <filter token="APPNAME" value="${app-name}"/>
         <filter token="VERSION" value="${app-version}"/>
-        <filter token="BUILD" value="${svn-revision}"/>
+        <filter token="BUILD" value="${git-revision}"/>
       </filterset>
     </copy>
 
@@ -176,11 +174,11 @@
           tofile="${bundle-contents}/MacOS/${app-name}"/>
     <chmod file="${bundle-contents}/MacOS/${app-name}" perm="775"/>
     <copy todir="${bundle-contents}/Resources">
-      <fileset dir="helpers/JavaAppLauncher/Resources" excludes=".svn"/>
+      <fileset dir="helpers/JavaAppLauncher/Resources" excludes=".git"/>
     </copy>
 
     <copy todir="${bundle-resources}/Java">
-      <fileset dir="products" excludes=".svn">
+      <fileset dir="products" excludes=".git">
         <include name="dcraw"/>
         <include name="LightZone-forkd"/>
         <include name="EWSMacCompress.tar.gz"/>
@@ -191,10 +189,6 @@
     </copy>
     <chmod file="${bundle-resources}/Java/dcraw" perm="775"/>
     <chmod file="${bundle-resources}/Java/LightZone-forkd" perm="775"/>
-
-    <copy file="helpers/eSellerateActivator/eSellerateActivate"
-          todir="${bundle-resources}/Java"/>
-    <chmod file="${bundle-resources}/Java/eSellerateActivate" perm="775"/>
 
     <exec executable="make" dir="help" failonerror="true" vmlauncher="false">
       <arg value="APP_NAME=${app-name}"/>
@@ -207,30 +201,9 @@
            perm="775"/>
   </target>
 
-  <target name="bundle-esd">
-    <antcall target="build-bundle">
-      <param name="licensetype" value="ESD"/>
-    </antcall>
-  </target>
-
-  <target name="bundle-tb">
-    <antcall target="build-bundle">
-      <param name="licensetype" value="TB"/>
-    </antcall>
-  </target>
-
   <!--===== Make a dmg file ================================================-->
 
-  <target name="dmg-esd" depends="bundle-esd">
-    <exec executable="make" dir="dmg" failonerror="true" vmlauncher="false">
-      <arg value="APP_NAME=${app-name}"/>
-      <arg value="USE_ICC=${USE_ICC}"/>
-      <arg value="UNIVERSAL=${UNIVERSAL}"/>
-      <arg value="user"/>
-    </exec>
-  </target>
-
-  <target name="dmg-tb" depends="bundle-tb">
+  <target name="dmg" depends="build-bundle">
     <exec executable="make" dir="dmg" failonerror="true" vmlauncher="false">
       <arg value="APP_NAME=${app-name}"/>
       <arg value="USE_ICC=${USE_ICC}"/>
@@ -245,20 +218,16 @@
 
   <target name="cc-build">
     <antcall target="cc-clean"/>
-    <exec executable="${common-dir}/tools/bin/lc-svn-branch"
-          outputproperty="svn-branch" vmlauncher="false" failonerror="true"/>
-    <exec executable="${common-dir}/tools/bin/lc-svn-revision"
-          outputproperty="svn-revision" vmlauncher="false" failonerror="true"/>
+    <exec executable="${common-dir}/tools/bin/lc-git-branch"
+          outputproperty="git-branch" vmlauncher="false" failonerror="true"/>
+    <exec executable="${common-dir}/tools/bin/lc-git-revision"
+          outputproperty="git-revision" vmlauncher="false" failonerror="true"/>
 
     <mkdir dir="dmg/cruisecontrol"/>
 
-    <antcall target="dmg-esd"/>
+    <antcall target="dmg"/>
     <move file="dmg/${app-name}.dmg"
-          tofile="${cc-dir}/${app-name}-${svn-branch}-r${svn-revision}-ESD.dmg"/>
-
-    <antcall target="dmg-tb"/>
-    <move file="dmg/${app-name}.dmg"
-          tofile="${cc-dir}/${app-name}-${svn-branch}-r${svn-revision}-TB.dmg"/>
+          tofile="${cc-dir}/${app-name}-${git-branch}-r${git-revision}.dmg"/>
   </target>
 
   <target name="cc-clean">
@@ -267,7 +236,7 @@
 
   <!--===== Make a zip file ================================================-->
 
-  <target name="zip" depends="bundle-esd">
+  <target name="zip" depends="build-bundle">
     <delete file="${app-dir}/${app-name}.zip"/>
     <zip destfile="${app-dir}/${app-name}.zip">
       <zipfileset dir="${app-dir}"

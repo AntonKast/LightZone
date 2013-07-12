@@ -17,19 +17,25 @@ JAVAH_CLASSES:=		com.lightcrafts.utils.Segment
 ROOT:=			../../..
 include			../jni.mk
 
-SEGM_SOURCE:=		$(wildcard segm/*.cpp) $(wildcard *.cpp)
-SEGM_INCLUDES:=		$(wildcard segm/*.h)
+SEGM_SOURCE:=		segm/ms.cpp segm/msSys.cpp segm/msImageProcessor.cpp segm/RAList.cpp segm/rlist.cpp $(wildcard *.cpp)
+SEGM_INCLUDES:=		segm/tdef.h segm/RAList.h segm/ms.h segm/msImageProcessor.h segm/msSys.h segm/rlist.h
 SEGM_LDFLAGS:=		$(filter-out $(PLATFORM_LDFLAGS),$(LDFLAGS))
 
 ifeq ($(UNIVERSAL),1)
 $(TARGET_PPC) $(TARGET_X86): $(SEGM_SOURCE) $(SEGM_INCLUDES)
 	-$(MKDIR) $(TARGET_DIR)
 	$(CC_LINK) $(CFLAGS) $(INCLUDES) $(SEGM_LDFLAGS) -o $@ $(SEGM_SOURCE)
+ifeq ($(PLATFORM),MacOSX)
+	  cp -p $@ $(TARGET_DIR)
+endif
 	$(RM) $@.dSYM
 else
 $(TARGET): $(SEGM_SOURCE) $(SEGM_INCLUDES)
 	-$(MKDIR) $(TARGET_DIR)
 	$(CC_LINK) $(CFLAGS) $(INCLUDES) $(SEGM_LDFLAGS) -o $@ $(SEGM_SOURCE)
+ifeq ($(PLATFORM),MacOSX)
+	  cp -p $@ $(TARGET_DIR)
+endif
 	$(RM) $@.dSYM
 endif
 

@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# LightZone startscript
+#
+echo Starting LightZone version 4.0.0 ...
+echo with options : ${@}
+
+arch=`getconf LONG_BIT`
+totalmem=`cat /proc/meminfo | grep MemTotal | sed -r 's/.* ([0-9]+) .*/\1/'`
+if [ $totalmem -ge 1024000 ]; then
+        maxmem=$(( $totalmem / 2 ))
+        # on 32-bit architectures there is ~2GB limit for maximum Java heap size
+        if [ $arch = "32" -a $totalmem -ge 4096000 ]; then
+                maxmem=2048000
+        fi
+else
+        maxmem=512000
+fi
+
+# workaround for loading problem with liblzma.so
+archpath=/lib/`uname -p`-linux-gnu
+if [ -d "$archpath" ]; then
+  lzmalibrary=`find $archpath -name "liblzma.so*" | head -1`
+fi
+if [ -z "$lzmalibrary" ]; then
+  if [ $arch = "32" ]; then
+    lib="/lib /usr/lib"
+  else
+    lib="/lib64 /usr/lib64"
+  fi
+  lzmalibrary=`find $lib -name "liblzma.so*" | head -1`
+  if [ -z "$lzmalibrary" ]; then
+    echo "liblzma was not found on the system; exiting"
+    exit 1
+  fi
+fi
+
+(cd "/opt/lightzone" && LD_PRELOAD="$lzmalibrary" LD_LIBRARY_PATH="/opt/lightzone" exec java -Xmx${maxmem}k -Djava.library.path="/opt/lightzone" -Dfile.encoding=UTF8 -classpath "/opt/lightzone/*" com.lightcrafts.platform.linux.LinuxLauncher ${@} )

@@ -33,7 +33,7 @@
 
   <target name="javac" depends="common">
     <mkdir dir="build"/>
-    <javac destdir="build" source="1.5" debug="true">
+    <javac destdir="build" source="1.6" target="1.6" debug="true">
       <src path="src"/>
       <classpath>
         <fileset dir="${common-dir}/products">
@@ -101,6 +101,7 @@
       <sysproperty key="com.lightcrafts.zorn" value="true"/>
       <sysproperty key="lightcrafts.debug" value="1"/>
       <sysproperty key="IDE" value="1"/>
+      <sysproperty key="file.encoding" value="UTF8"/>
     </java>
   </target>
 
@@ -119,14 +120,7 @@
 
     <copy file="helpers/JavaAppLauncher/lightzone.jvmargs" todir="products"
           overwrite="true">
-      <filterset>
-        <filter token="LICENSETYPE" value="${licensetype}"/>
-      </filterset>
     </copy>
-
-    <copy file="helpers/eSellerateInstaller/eSellerateInstaller.exe"
-          tofile="products/eSellerateInstaller.exe" overwrite="true"/>
-    <chmod file="products/eSellerateInstaller.exe" perm="775"/>
 
     <exec executable="make" dir="resources/help" failonerror="true"
           vmlauncher="false">
@@ -168,24 +162,24 @@
 
   <target name="cc-build">
     <antcall target="cc-clean"/>
-    <exec executable="perl"
-          outputproperty="svn-branch" failonerror="true" vmlauncher="false">
-      <arg path="${common-dir}/tools/bin/lc-svn-branch"/>
+    <exec executable="bash"
+          outputproperty="git-branch" failonerror="true" vmlauncher="false">
+      <arg path="${common-dir}/tools/bin/lc-git-branch"/>
     </exec>
     <exec executable="bash"
-          outputproperty="svn-revision" failonerror="true" vmlauncher="false">
-      <arg path="${common-dir}/tools/bin/lc-svn-revision"/>
+          outputproperty="git-revision" failonerror="true" vmlauncher="false">
+      <arg path="${common-dir}/tools/bin/lc-git-revision"/>
     </exec>
 
     <mkdir dir="cruisecontrol"/>
 
     <antcall target="installer-esd"/>
     <move file="${installer-name}"
-          tofile="${cc-dir}/${app-name}-${svn-branch}-r${svn-revision}-ESD.exe"/>
+          tofile="${cc-dir}/${app-name}-${git-branch}-r${git-revision}-ESD.exe"/>
 
     <antcall target="installer-tb"/>
     <move file="${installer-name}"
-          tofile="${cc-dir}/${app-name}-${svn-branch}-r${svn-revision}-TB.exe"/>
+          tofile="${cc-dir}/${app-name}-${git-branch}-r${git-revision}-TB.exe"/>
   </target>
 
   <target name="cc-clean">

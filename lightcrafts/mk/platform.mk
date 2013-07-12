@@ -12,7 +12,23 @@ ifndef JAVA_HOME
   $(error "JAVA_HOME" must be set)
 endif
 
-PROCESSOR:=		$(shell uname -p)
+PROCESSOR:=		$(shell uname -m)
+ifeq ($(PROCESSOR),i486)
+  PROCESSOR:=		i386
+endif
+ifeq ($(PROCESSOR),i586)
+  PROCESSOR:=		i386
+endif
+ifeq ($(PROCESSOR),i686)
+  PROCESSOR:=		i386
+endif
+ifeq ($(PROCESSOR),amd64)
+  PROCESSOR:=		x86_64
+endif
+ifeq ($(PROCESSOR),"Power Macintosh")
+  PROCESSOR:=		powerpc
+endif
+
 TOOLS_BIN:=		$(abspath $(ROOT)/lightcrafts/tools/bin)
 
 # Default to a normal (Unix) classpath seperator.
@@ -44,10 +60,8 @@ RM:=			rm -fr
 # Mac OS X
 ##
 ifeq ($(PLATFORM),MacOSX)
-  CC:=			gcc-4.0
-  CXX:=			g++-4.0
-  PLATFORM_CFLAGS+=	-m32
-  SDKROOT:=		/Developer/SDKs/MacOSX10.5.sdk
+  MACOSX_DEPLOYMENT_TARGET:= 	$(shell sw_vers -productVersion | cut -d. -f-2)
+  SDKROOT:=		$(shell xcodebuild -version -sdk macosx${MACOSX_DEPLOYMENT_TARGET} | sed -n '/^Path:/p' | sed 's/^Path: //')
   ifndef EXECUTABLE
     PLATFORM_CFLAGS+=	-fPIC
   endif
@@ -75,7 +89,7 @@ ifeq ($(PLATFORM),MacOSX)
   # performance CFLAGS go in the FAST_CFLAGS_* variables below.
   ##
   MACOSX_CFLAGS_PPC:=	-mcpu=G4 -mtune=G5
-  MACOSX_CFLAGS_X86:=	-march=pentium4
+  MACOSX_CFLAGS_X86:=	-march=core2 -mtune=generic
 
   ifdef HIGH_PERFORMANCE
     ##
@@ -90,7 +104,7 @@ ifeq ($(PLATFORM),MacOSX)
 	AR_X86:=	$(XIAR)
         CXX_X86:=	$(ICC)
       else
-        ifeq ($(PROCESSOR),i386)
+        ifneq ($(PROCESSOR),powerpc)
 	  AR:=		$(XIAR)
           CC:=		$(ICC)
           CXX:=		$(ICC)
@@ -100,8 +114,7 @@ ifeq ($(PLATFORM),MacOSX)
       FAST_CFLAGS_X86:=	-O3 \
 			-fno-trapping-math \
 			-fomit-frame-pointer \
-			-malign-double \
-			-msse2 -mfpmath=sse,387
+			-msse2 -mfpmath=sse
     endif
     MACOSX_CFLAGS_PPC+=	$(FAST_CFLAGS_PPC)
     MACOSX_CFLAGS_X86+=	$(FAST_CFLAGS_X86)
@@ -115,26 +128,17 @@ ifeq ($(PLATFORM),MacOSX)
 
     ifeq ($(PROCESSOR),powerpc)
       OTHER_PROCESSOR:=	i386
-    endif
-    ifeq ($(PROCESSOR),i386)
+    else
       OTHER_PROCESSOR:=	powerpc
     endif
     DARWIN_RELEASE:=	$(shell uname -r)
     CONFIG_HOST:=	$(PROCESSOR)-apple-darwin$(DARWIN_RELEASE)
     CONFIG_TARGET:=	$(OTHER_PROCESSOR)-apple-darwin$(DARWIN_RELEASE)
-
-    ##
-    # Ensure we're compiling using gcc/g++ 4.0 in order to build universal
-    # binaries.
-    ##
-    CC:=		gcc-4.0
-    CXX:=		g++-4.0
   else
     ifeq ($(PROCESSOR),powerpc)
       PLATFORM_CFLAGS+=	$(MACOSX_CFLAGS_PPC)
       PLATFORM_CFLAGS_PPC:= $(PLATFORM_CFLAGS)
-    endif
-    ifeq ($(PROCESSOR),i386)
+    else
       PLATFORM_CFLAGS+=	$(MACOSX_CFLAGS_X86)
       PLATFORM_CFLAGS_X86:= $(PLATFORM_CFLAGS)
     endif
@@ -142,15 +146,12 @@ ifeq ($(PLATFORM),MacOSX)
 
   LIPO:=		lipo
 
-  export MACOSX_DEPLOYMENT_TARGET:= 	10.4
-
   ##
   # Note that JAVA_INCLUDES is treated as relative to SDKROOT.
   ##
-  JAVA_VERSION:=	1.5
-  JAVA_HOME=		/System/Library/Frameworks/JavaVM.framework/Versions/$(JAVA_VERSION)/Home
-  JAVA_INCLUDES=	-I$(JAVA_HOME)/include
-  JAVA_LDFLAGS=		-L$(JAVA_HOME)/lib
+  JAVA_HOME=		/Library/Java/Home
+  JAVA_INCLUDES=	-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers
+  JAVA_LDFLAGS=		-L/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Libraries
   JNILIB_PREFIX:=	lib
   JNILIB_EXT:=		.jnilib
   DYLIB_PREFIX:=	$(JNILIB_PREFIX)
@@ -167,7 +168,11 @@ else
   #
   # See Sun bug ID: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5102720
   ##
-  P4_CPU_FLAGS:=	-march=pentium4
+  ifeq ($(PROCESSOR),x86_64)
+    P4_CPU_FLAGS:=	-march=athlon64
+  else
+    P4_CPU_FLAGS:=	-march=pentium4
+  endif
 
   SSE_FLAGS_OFF:=	$(P4_CPU_FLAGS) -mno-sse
   SSE_FLAGS_ON:=	$(P4_CPU_FLAGS) -msse2
@@ -183,9 +188,6 @@ ifeq ($(PLATFORM),Windows)
   ifndef MSSDK_HOME
     $(error "MSSDK_HOME" must be set)
   endif
-  ifndef MSVS_HOME
-    $(error "MSVS_HOME" must be set)
-  endif
 
   NUM_PROCESSORS:=	$(shell grep '^processor' /proc/cpuinfo | wc -l)
   ifeq ($(NUM_PROCESSORS),0)
@@ -193,7 +195,6 @@ ifeq ($(PLATFORM),Windows)
   endif
 
   MSSDK_HOME_W32:=	$(shell cygpath -w $(MSSDK_HOME))
-  MSVS_HOME_W32:=	$(shell cygpath -w $(MSVS_HOME))
 
   RC:=			"$(MSSDK_HOME)/Bin/RC.Exe"
   RC_INCLUDES:=		-i "$(shell cygpath -w /usr/include/w32api)"
@@ -210,8 +211,7 @@ ifeq ($(PLATFORM),Windows)
     else
       PLATFORM_CFLAGS+=	-O3 \
 			-fno-trapping-math \
-			-fomit-frame-pointer \
-			-malign-double
+			-fomit-frame-pointer
     endif
   else
     PLATFORM_CFLAGS+=	-Os
@@ -236,9 +236,17 @@ endif
 # Linux
 ##
 ifeq ($(PLATFORM),Linux)
-  PLATFORM_CFLAGS+=	-march=pentium3 -mtune=pentium4 $(SSE_FLAGS_ON) -fpermissive
+  ifeq ($(PROCESSOR),x86_64)
+    PLATFORM_CFLAGS+=	-march=athlon64 -mtune=generic $(SSE_FLAGS_ON) -fPIC
+  else
+    PLATFORM_CFLAGS+=	-march=pentium4 -mtune=generic $(SSE_FLAGS_ON) -fPIC
+  endif
+
   ifdef HIGH_PERFORMANCE
-    PLATFORM_CFLAGS+=	-O3
+    PLATFORM_CFLAGS+=	-O3 \
+			-fno-trapping-math \
+			-fomit-frame-pointer \
+			-msse2 -mfpmath=sse
   else
     PLATFORM_CFLAGS+=	-Os
   endif

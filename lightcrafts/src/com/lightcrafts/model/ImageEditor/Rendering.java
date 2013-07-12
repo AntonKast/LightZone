@@ -7,10 +7,8 @@ import com.lightcrafts.model.Operation;
 import com.lightcrafts.jai.utils.Functions;
 import com.lightcrafts.jai.JAIContext;
 import com.lightcrafts.jai.opimage.CachedImage;
-import com.lightcrafts.jai.opimage.UnlicensedOpImage;
 
 import com.lightcrafts.mediax.jai.*;
-import com.lightcrafts.license.LicenseChecker;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -33,8 +31,6 @@ public class Rendering implements Cloneable {
     private ImagePyramid pyramid;
 
     public boolean cheapScale = false;
-
-    private boolean licenseExpired = LicenseChecker.hasExpiredTrialLicense();
 
     public Rendering clone() /* throws CloneNotSupportedException */ {
         try {
@@ -254,7 +250,7 @@ public class Rendering implements Cloneable {
         } else
             System.out.println("Rendering.renderPipeline: null pipeline?");
 
-        return licenseExpired ? new UnlicensedOpImage(processedImage, null) : processedImage;
+        return processedImage;
     }
 
     public void prefetch(Rectangle area) {
@@ -331,8 +327,8 @@ public class Rendering implements Cloneable {
 
         // Scale
         if (scaleFactor < 1 || !isInputTransform) {
-            float scaleX = (float) Math.floor(scaleFactor * sourceBounds.width) / (float) sourceBounds.width;
-            float scaleY = (float) Math.floor(scaleFactor * sourceBounds.height) / (float) sourceBounds.height;
+            double scaleX = Math.round(scaleFactor * sourceBounds.width) / (double) sourceBounds.width;
+            double scaleY = Math.round(scaleFactor * sourceBounds.height) / (double) sourceBounds.height;
             transform.preConcatenate(AffineTransform.getScaleInstance(scaleX, scaleY));
         }
 
@@ -378,17 +374,18 @@ public class Rendering implements Cloneable {
 
             double dx = one.getX() - zero.getX();
             double dy = one.getY() - zero.getY();
-            double scale = Math.sqrt(dx*dx + dy*dy)/Math.sqrt(2.0);
+            double scale = Math.sqrt((dx*dx + dy*dy) / 2.0);
 
             if (!cheapScale && scale <= 0.5) {
                 int level = 0;
                 while(scale <= 1/(double) MIP_SCALE_RATIO) {
                     scale *= MIP_SCALE_RATIO;
                     level++;
-                    transform = new AffineTransform(transform);
-                    transform.concatenate(AffineTransform.getScaleInstance(MIP_SCALE_RATIO, MIP_SCALE_RATIO));
                 }
                 image = (PlanarImage) pyramid.getImage(level);
+                transform = new AffineTransform(transform);
+                transform.concatenate(AffineTransform.getScaleInstance(sourceImage.getWidth() / (double)image.getWidth(),
+                                                                       sourceImage.getHeight() / (double)image.getHeight()));
             }
 
             if (!transform.isIdentity()) {
@@ -410,8 +407,8 @@ public class Rendering implements Cloneable {
             Rectangle bounds = new Rectangle(xformedSourceImage.getMinX(), xformedSourceImage.getMinY(),
                                              xformedSourceImage.getWidth(), xformedSourceImage.getHeight());
             Rectangle finalBounds = bounds.intersection(new Rectangle(0, 0,
-                                                                      (int) actualCropBounds.getWidth(),
-                                                                      (int) actualCropBounds.getHeight()));
+                                                                      (int) Math.round(actualCropBounds.getWidth()),
+                                                                      (int) Math.round(actualCropBounds.getHeight())));
             if (finalBounds.width > 0 && finalBounds.height > 0)
                 xformedSourceImage = Functions.crop(xformedSourceImage,
                                                     finalBounds.x, finalBounds.y,

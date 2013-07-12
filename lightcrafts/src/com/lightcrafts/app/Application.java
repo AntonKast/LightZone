@@ -22,12 +22,12 @@ import com.lightcrafts.model.PrintSettings;
 import com.lightcrafts.model.Scale;
 import com.lightcrafts.platform.*;
 import com.lightcrafts.prefs.PreferencesDialog;
-import com.lightcrafts.prefs.ApplicationMode;
 import com.lightcrafts.splash.AboutDialog;
 import com.lightcrafts.splash.SplashWindow;
 import com.lightcrafts.splash.StartupProgress;
 import com.lightcrafts.templates.TemplateDatabase;
 import com.lightcrafts.templates.TemplateKey;
+import com.lightcrafts.ui.LightZoneSkin;
 import com.lightcrafts.ui.editor.*;
 import com.lightcrafts.ui.editor.assoc.DocumentDatabase;
 import com.lightcrafts.ui.editor.assoc.DocumentInterpreter;
@@ -45,7 +45,6 @@ import com.lightcrafts.utils.thread.ProgressThread;
 import com.lightcrafts.utils.xml.XMLException;
 import com.lightcrafts.utils.xml.XmlDocument;
 import com.lightcrafts.utils.xml.XmlNode;
-import com.lightcrafts.license.LicenseChecker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1324,29 +1323,10 @@ public class Application {
         AboutDialog about = new AboutDialog(frame);
         about.centerOnScreen();
         about.setVisible(true);
-        if (LicenseChecker.getLicenseKey() == null) {
-            LicenseChecker.license();
-        }
     }
 
     public static void showPreferences() {
-        boolean wasBasic = ApplicationMode.isBasicMode();
         PreferencesDialog.showDialog(getActiveFrame());
-        boolean isBasic = ApplicationMode.isBasicMode();
-        if (isBasic != wasBasic) {
-            appModeChanged();
-        }
-    }
-
-    // Reinitialize windows, for switching between Basic and Full.
-    public static void appModeChanged() {
-        ComboFrame newFrame = openEmpty();
-        List<ComboFrame> frames = new LinkedList<ComboFrame>(Current);
-        for (ComboFrame frame : frames) {
-            if (newFrame != frame) {
-                close(frame);
-            }
-        }
     }
 
     static ComboFrame getFrameForFile(File file) {
@@ -1445,16 +1425,6 @@ public class Application {
                 }
             }
         }
-    }
-
-    // Make the ever-present invisible window on the Mac, with a menu.
-    private static void openMacPlaceholderFrame() {
-        JMenuBar menus = new ComboFrameMenuBar();
-        JFrame frame = new JFrame();
-        frame.setJMenuBar(menus);
-        frame.setBounds(-1000000, -1000000, 0, 0);
-        frame.setUndecorated(true);
-        frame.setVisible(true);
     }
 
     private static final int SAVE_YES    = 0;
@@ -2173,12 +2143,6 @@ public class Application {
 
         ExceptionDialog.installHandler();
 
-        // If a license was entered during the launcher phase, then be sure
-        // the Basic mode preference is reset so the licensed functionality
-        // will be apparent.
-        if (LicenseChecker.enteredLicenseKey()) {
-            ApplicationMode.resetPreference();
-        }
         // This debug features streams all focus events to standard output.
         if (System.getProperty("lightcrafts.debug.focus") != null) {
             initFocusDebug();
@@ -2201,9 +2165,14 @@ public class Application {
             EventQueue.invokeLater(
                 new Runnable() {
                     public void run() {
-                        setLookAndFeel();
                         if (Platform.getType() == Platform.MacOSX) {
-                            openMacPlaceholderFrame();
+                            // Get a Mac menu bar before setting LaF, then restore.
+                            Object menuBarUI = UIManager.get("MenuBarUI");
+                            setLookAndFeel(new LightZoneSkin().getLightZoneLookAndFeel());
+                            UIManager.put("MenuBarUI", menuBarUI);
+                        }
+                        else {
+                            setLookAndFeel();
                         }
                         openEmpty();
                         Platform.getPlatform().readyToOpenFiles();
