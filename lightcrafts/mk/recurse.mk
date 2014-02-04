@@ -20,7 +20,7 @@ endif
 # overly verbose.
 
 .PHONY: all
-all %:
+all clean:
 	@for dir in $(SUBDIRS); \
 	do \
 	    if [ -f $$dir/*akefile ]; \

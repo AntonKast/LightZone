@@ -19,7 +19,7 @@ include			../jni.mk
 
 SEGM_SOURCE:=		$(wildcard segm/*.cpp) $(wildcard *.cpp)
 SEGM_INCLUDES:=		$(wildcard segm/*.h)
-SEGM_LDFLAGS:=		$(filter-out $(PLATFORM_LDFLAGS),$(LDFLAGS))
+SEGM_LDFLAGS?=		$(filter-out $(PLATFORM_LDFLAGS),$(LDFLAGS))
 
 ifeq ($(UNIVERSAL),1)
 $(TARGET_PPC) $(TARGET_X86): $(SEGM_SOURCE) $(SEGM_INCLUDES)
