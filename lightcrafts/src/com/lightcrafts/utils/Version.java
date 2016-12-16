@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.ResourceBundle;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** A container and accessor for static version data, either configured in
@@ -68,17 +69,15 @@ public final class Version {
      * Gets the Subversion revision number that was current at the time this
      * class was compiled.
      */
-    public static int getRevisionNumber() {
-        if ( SVNInfo == null )
-            return -1;
-        try {
-            final String text =
-                RevisionPattern.matcher( SVNInfo ).replaceAll( "$1" );
-            return Integer.parseInt( text );
+    public static String getRevisionNumber() {
+        if (SVNInfo == null)
+            return "";
+        Matcher matcher = RevisionPattern.matcher(SVNInfo);
+        String text = "";
+        if (matcher.find()) {
+            text = matcher.group();
         }
-        catch ( NumberFormatException e ) {
-            return -1;
-        }
+        return text;
     }
 
     public static Date getChangeDate() {
@@ -193,12 +192,12 @@ public final class Version {
         ResourceBundle.getBundle( "com.lightcrafts.utils.resources.Version" );
 
     private static DateFormat ChangeDateFormat =
-        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+        new SimpleDateFormat("MMM dd HH:mm:ss yyyy Z");
 
-    // The date pattern from "svn info" looks like
-    // "Last Changed Date: 2005-09-26 13:06:44 -0700 (Mon, 26 Sep 2005)":
+    // The date pattern from "git status" looks like
+    // "Date:   Sat Dec 22 10:55:47 2012 -0800":
     private static Pattern ChangeDatePattern = Pattern.compile(
-        ".*^Last Changed Date:\\s*([^(]+).*",
+        ".*^Date:\\s*... ([^(]+).*",
         Pattern.DOTALL | Pattern.MULTILINE
     );
 
@@ -210,8 +209,13 @@ public final class Version {
     private static String Version;  // Contents of "version.txt"
 
     // The revision number from "svn info" looks like "Revision: 1000":
+    // The revision number from "git status" looks like "commit 268da1ba96c935681e412f1cbb1146666daafd78":
     private static Pattern RevisionPattern = Pattern.compile(
-        ".*^Revision:\\s*([0-9]+).*", Pattern.DOTALL | Pattern.MULTILINE
+        ".*^commit\\s*([0-9]|[a-z]){40}", Pattern.DOTALL | Pattern.MULTILINE
+    );
+
+    private static Pattern RevisionHashMatcher = Pattern.compile(
+            "([0-9]|[a-z]){40}", Pattern.DOTALL | Pattern.MULTILINE
     );
 
     // The URL pattern from "svn info" looks like "URL: svn+ssh://skippy...":
