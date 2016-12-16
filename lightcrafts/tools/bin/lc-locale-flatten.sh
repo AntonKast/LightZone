@@ -12,11 +12,12 @@ separatorPre='# *** flattened from'
 separatorPost='***'
 
 # Properties files are discovered under the working directory:
-files=`find . -name "*.properties" | sort`
+dir='locale/ resources/com/lightcrafts/ui/ resources/com/lightcrafts/app/ resources/com/lightcrafts/utils/'
+files=`find $dir -regex ".*[^_]..\.properties" | sort`
 
 # Stamp the flat form with its revision number:
 echo -n "# "
-svn info | grep Revision
+git log -1 | grep '^commit '
 
 for file in $files; do
     echo "$separatorPre $file $separatorPost"
